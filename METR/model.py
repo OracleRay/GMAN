@@ -32,22 +32,22 @@ def FC(x, units, activations, bn, bn_decay, is_training, use_bias = True, drop =
 def STEmbedding(SE, TE, T, D, bn, bn_decay, is_training):
     '''
     spatio-temporal embedding
-    SE:     [N, D]
-    TE:     [batch_size, P + Q, 2] (dayofweek, timeofday)
+    SE:     空间嵌入矩阵，形状为[N, D]
+    TE:     时间嵌入矩阵，形状为[batch_size, P + Q, 2] (dayofweek, timeofday)
     T:      num of time steps in one day
     D:      output dims
     retrun: [batch_size, P + Q, N, D]
     '''
     # spatial embedding
-    SE = tf.expand_dims(tf.expand_dims(SE, axis = 0), axis = 0)
+    SE = tf.expand_dims(tf.expand_dims(SE, axis = 0), axis = 0)  # 扩展后形状变为 [1, 1, N, D]
     SE = FC(
         SE, units = [D, D], activations = [tf.nn.relu, None],
         bn = bn, bn_decay = bn_decay, is_training = is_training)
     # temporal embedding
-    dayofweek = tf.one_hot(TE[..., 0], depth = 7)
+    dayofweek = tf.one_hot(TE[..., 0], depth = 7)  # 独热编码处理
     timeofday = tf.one_hot(TE[..., 1], depth = T)
-    TE = tf.concat((dayofweek, timeofday), axis = -1)
-    TE = tf.expand_dims(TE, axis = 2)
+    TE = tf.concat((dayofweek, timeofday), axis = -1)  # 拼接时间特征
+    TE = tf.expand_dims(TE, axis = 2)  # 扩展维度以便与 SE 的形状匹配
     TE = FC(
         TE, units = [D, D], activations = [tf.nn.relu, None],
         bn = bn, bn_decay = bn_decay, is_training = is_training)    
@@ -62,7 +62,7 @@ def spatialAttention(X, STE, K, d, bn, bn_decay, is_training):
     d:      dimension of each attention outputs
     return: [batch_size, num_step, N, D]
     '''
-    D = K * d
+    D = K * d  # 多头注意力的总输出维度
     X = tf.concat((X, STE), axis = -1)
     # [batch_size, num_step, N, K * d]
     query = FC(
@@ -74,7 +74,7 @@ def spatialAttention(X, STE, K, d, bn, bn_decay, is_training):
     value = FC(
         X, units = D, activations = tf.nn.relu,
         bn = bn, bn_decay = bn_decay, is_training = is_training)
-    # [K * batch_size, num_step, N, d]
+    # 多头分解：[K * batch_size, num_step, N, d]
     query = tf.concat(tf.split(query, K, axis = -1), axis = 0)
     key = tf.concat(tf.split(key, K, axis = -1), axis = 0)
     value = tf.concat(tf.split(value, K, axis = -1), axis = 0)
@@ -118,6 +118,7 @@ def temporalAttention(X, STE, K, d, bn, bn_decay, is_training, mask = True):
     # query: [K * batch_size, N, num_step, d]
     # key:   [K * batch_size, N, d, num_step]
     # value: [K * batch_size, N, num_step, d]
+    # 转置以适配时间注意力计算
     query = tf.transpose(query, perm = (0, 2, 1, 3))
     key = tf.transpose(key, perm = (0, 2, 3, 1))
     value = tf.transpose(value, perm = (0, 2, 1, 3))
