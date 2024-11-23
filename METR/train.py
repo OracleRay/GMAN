@@ -19,7 +19,7 @@ parser.add_argument('--K', type = int, default = 8,
 parser.add_argument('--d', type = int, default = 8,
                     help = 'dims of each head attention outputs')
 parser.add_argument('--train_ratio', type = float, default = 0.7,
-                    help = 'training set [default : 0.7]')
+                    help = 'training set [default : 0.7]')  # 定义训练集占总数据集的比例。
 parser.add_argument('--val_ratio', type = float, default = 0.1,
                     help = 'validation set [default : 0.1]')
 parser.add_argument('--test_ratio', type = float, default = 0.2,
@@ -29,11 +29,11 @@ parser.add_argument('--batch_size', type = int, default = 16,
 parser.add_argument('--max_epoch', type = int, default = 1000,
                     help = 'epoch to run')
 parser.add_argument('--patience', type = int, default = 10,
-                    help = 'patience for early stop')
+                    help = 'patience for early stop')  # 连续若干 epoch 验证损失未改善时，提前停止训练。
 parser.add_argument('--learning_rate', type=float, default = 0.001,
                     help = 'initial learning rate')
 parser.add_argument('--decay_epoch', type=int, default = 5,
-                    help = 'decay epoch')
+                    help = 'decay epoch')  # 在每隔指定 epoch 后，学习率将按照某种规则降低
 parser.add_argument('--traffic_file', default = 'data/METR.h5',
                     help = 'traffic file')
 parser.add_argument('--SE_file', default = 'data/SE(METR).txt',
